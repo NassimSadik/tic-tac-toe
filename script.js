@@ -35,7 +35,11 @@ function Gameboard() {
     });
   };
 
-  return { getBoard, markSquare, printBoard, checkWin };
+  const checkTie = () => {
+    return board.every((square) => square !== '');
+  };
+
+  return { getBoard, markSquare, printBoard, checkWin, checkTie };
 }
 
 function gameController(
@@ -83,6 +87,10 @@ function gameController(
     if (board.markSquare(index, activePlayer.mark)) {
       if (board.checkWin(activePlayer.mark)) {
         console.log(`${activePlayer.name} wins!`);
+        board.printBoard();
+        return;
+      } else if (board.checkTie()) {
+        console.log("It's a tie!");
         board.printBoard();
         return;
       }
