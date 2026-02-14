@@ -22,13 +22,6 @@ function Gameboard() {
     return false;
   };
 
-  const printBoard = () => {
-    let display = board.slice(0, 3).join(' | ') + '\n';
-    display += board.slice(3, 6).join(' | ') + '\n';
-    display += board.slice(6, 9).join(' | ');
-    console.log(display);
-  };
-
   const checkWin = (mark) => {
     return winningConditions.some((condition) => {
       return condition.every((index) => board[index] === mark);
@@ -39,7 +32,11 @@ function Gameboard() {
     return board.every((square) => square !== '');
   };
 
-  return { getBoard, markSquare, printBoard, checkWin, checkTie };
+  const gameOver = () => {
+    return checkWin('X') || checkWin('O') || checkTie();
+  };
+
+  return { getBoard, markSquare, checkWin, checkTie, gameOver };
 }
 
 function gameController(
@@ -47,6 +44,7 @@ function gameController(
   playerTwoName = 'Player 2',
 ) {
   const board = Gameboard();
+  const playerTurnDiv = document.querySelector('.turn');
 
   const players = [
     {
@@ -63,50 +61,49 @@ function gameController(
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
+    playerTurnDiv.textContent = `${activePlayer.name}'s turn (${activePlayer.mark})`;
   };
 
-  const getActivePlayer = () => activePlayer;
-
-  const printNewRound = () => {
-    board.printBoard();
-    console.log(`${activePlayer.name}'s turn (${activePlayer.mark})`);
-  };
-
-  const getUserInput = () => {
-    const input = prompt('Enter a number (0-8) to mark your square:');
-    const index = parseInt(input);
-    if (isNaN(index) || index < 0 || index > 8) {
-      console.log('Invalid input. Please enter a number between 0 and 8.');
-      return getUserInput();
-    }
-    return index;
-  };
-
-  const playRound = () => {
-    const index = getUserInput();
+  const playRound = (index) => {
     if (board.markSquare(index, activePlayer.mark)) {
       if (board.checkWin(activePlayer.mark)) {
-        console.log(`${activePlayer.name} wins!`);
-        board.printBoard();
+        playerTurnDiv.textContent = `${activePlayer.name} wins!`;
         return;
       } else if (board.checkTie()) {
-        console.log("It's a tie!");
-        board.printBoard();
+        playerTurnDiv.textContent = "It's a tie!";
         return;
       }
       switchPlayerTurn();
-      printNewRound();
-      playRound();
-    } else {
-      console.log('Square already marked. Try again.');
-      playRound();
     }
   };
 
-  printNewRound();
-  playRound();
-
-  return { playRound, getActivePlayer };
+  return { playRound, getBoard: board.getBoard, gameOver: board.gameOver };
 }
 
-const game = gameController();
+function screenController() {
+  const game = gameController();
+  const boardContainer = document.querySelector('.container');
+
+  const updateScreen = () => {
+    boardContainer.textContent = '';
+
+    const board = game.getBoard();
+    board.forEach((square, index) => {
+      const squareElement = document.createElement('div');
+      squareElement.classList.add('square');
+      squareElement.textContent = square;
+      squareElement.addEventListener('click', () => {
+        if (square === '' && !game.gameOver()) {
+          game.playRound(index);
+          updateScreen();
+        }
+      });
+
+      boardContainer.appendChild(squareElement);
+    });
+  };
+
+  updateScreen();
+}
+
+screenController();
