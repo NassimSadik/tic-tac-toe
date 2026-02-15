@@ -46,6 +46,8 @@ function gameController(
   const board = Gameboard();
   const playerTurnDiv = document.querySelector('.turn');
 
+  playerTurnDiv.textContent = `${playerOneName}'s turn (X)`;
+
   const players = [
     {
       name: playerOneName,
